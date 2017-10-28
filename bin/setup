@@ -43,4 +43,9 @@ fi
 [ -f "${OPENSHIFT_WILDFLY11_DIR}/.bash_history" ] && cp ${OPENSHIFT_WILDFLY11_DIR}/.bash_history ${OPENSHIFT_WILDFLY11_DIR}/home/ ;
 [ -f "${OPENSHIFT_WILDFLY11_DIR}/.profile" ] && cp ${OPENSHIFT_WILDFLY11_DIR}/.profile ${OPENSHIFT_WILDFLY11_DIR}/home/ ;
 
+JAVABIN=$(which java 2>/dev/null)
+[ ! -z "$JAVABIN" ] && {
+    setcap 'cap_net_bind_service=+ep' $(readlink -f "$JAVABIN")
+}
+
 yum -y install libaio &>/dev/null;
