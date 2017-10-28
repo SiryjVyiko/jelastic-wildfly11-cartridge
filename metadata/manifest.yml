@@ -2,7 +2,7 @@ Name: wildfly
 Cartridge-Short-Name: WILDFLY11
 Display-Name: WildFly Application Server 11 Final
 Description: "The leading open source Java EE7 application server for enterprise Java applications. Popular development frameworks include Seam, CDI, Weld, and Spring."
-Version: '10.1'
+Version: '11.0'
 License: LGPL
 License-Url: http://www.gnu.org/copyleft/lesser.txt
 Source-Url: https://github.com/SiryjVyiko/jelastic-wildfly11-cartridge.git
