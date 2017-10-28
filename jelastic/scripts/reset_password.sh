@@ -7,7 +7,7 @@ export JAVA_HOME="/usr/java/default/";
 #$J_OPENSHIFT_APP_ADM_PASSWORD    ;   Use this varible for your password
 
 function _setPassword() {
-        $OPENSHIFT_WILDFLY10_DIR/versions/${Version}/bin/add-user.sh --user ${J_OPENSHIFT_APP_ADM_USER} --password ${J_OPENSHIFT_APP_ADM_PASSWORD} --silent --enable
+        $OPENSHIFT_WILDFLY11_DIR/versions/${Version}/bin/add-user.sh --user ${J_OPENSHIFT_APP_ADM_USER} --password ${J_OPENSHIFT_APP_ADM_PASSWORD} --silent --enable
 }
 
 

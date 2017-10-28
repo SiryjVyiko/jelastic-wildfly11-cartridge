@@ -8,11 +8,11 @@ export JAVA_HOME="/usr/java/default/"
 export OPENSHIFT_SECRET_TOKEN="thisisasecrettoken"
 
 JBOSS_HOME="/opt/repo/versions/${Version}/"
-OPENSHIFT_WILDFLY10_DIR="/opt/repo/versions/${Version}/"
+OPENSHIFT_WILDFLY11_DIR="/opt/repo/versions/${Version}/"
 
-WILDFLY10_BIN_DIR=${OPENSHIFT_WILDFLY10_DIR}/bin
-WILDFLY10_PID_FILE=/opt/repo/pid/jbossas.pid
-WILDFLY10_DEPLOYMENTS_DIR=${OPENSHIFT_WILDFLY10_DIR}/standalone/deployments
+WILDFLY11_BIN_DIR=${OPENSHIFT_WILDFLY11_DIR}/bin
+WILDFLY11_PID_FILE=/opt/repo/pid/jbossas.pid
+WILDFLY11_DEPLOYMENTS_DIR=${OPENSHIFT_WILDFLY11_DIR}/standalone/deployments
 SCANCONFIG=""
 
 cartridge_type="wildfly"
@@ -44,7 +44,7 @@ function waitondeployments() {
       if [ "$SCANCONFIG" == "" ]; then
         client_message "Could not connect to WildFly management interface, skipping deployment verification"
       elif [[ $SCANCONFIG =~ '"scan-enabled" => true' ]]; then
-        pushd $WILDFLY10_DEPLOYMENTS_DIR
+        pushd $WILDFLY11_DEPLOYMENTS_DIR
 
         artifacts=()
         while read -r -d $'\0'; do
@@ -113,8 +113,8 @@ function waitondeployments() {
 function isrunning() {
 
     # Check for running app
-    if [ -f "$WILDFLY10_PID_FILE" ]; then
-      wfpid=$(cat $WILDFLY10_PID_FILE);
+    if [ -f "$WILDFLY11_PID_FILE" ]; then
+      wfpid=$(cat $WILDFLY11_PID_FILE);
       if /bin/ps --pid $wfpid 1>&2 >/dev/null;
       then
         return 0
@@ -162,13 +162,13 @@ function ishttpup() {
     let count=0
     while [ ${count} -lt 64 ]
     do
-        if echo 2> /dev/null > "/dev/tcp/${OPENSHIFT_WILDFLY10_IP}/${OPENSHIFT_WILDFLY10_HTTP_PORT}"; then
-            echo "Found ${OPENSHIFT_WILDFLY10_IP}:${OPENSHIFT_WILDFLY10_HTTP_PORT} listening port"
+        if echo 2> /dev/null > "/dev/tcp/${OPENSHIFT_WILDFLY11_IP}/${OPENSHIFT_WILDFLY11_HTTP_PORT}"; then
+            echo "Found ${OPENSHIFT_WILDFLY11_IP}:${OPENSHIFT_WILDFLY11_HTTP_PORT} listening port"
             return 0
         fi
         # if the process failed to start, error out immediately
         # rather than waiting for the timeout on the port being available.
-        wpid=$(cat $WILDFLY10_PID_FILE);
+        wpid=$(cat $WILDFLY11_PID_FILE);
         if ! ps | grep -v grep | grep $wpid > /dev/null; then
           return 2
         fi
@@ -186,8 +186,8 @@ function ismgmtup() {
     let count=0
     while [ ${count} -lt 64 ]
     do
-        if echo 2> /dev/null > "/dev/tcp/${OPENSHIFT_WILDFLY10_IP}/${OPENSHIFT_WILDFLY10_MANAGEMENT_HTTPS_PORT}"; then
-            echo "Found ${OPENSHIFT_WILDFLY10_IP}:${OPENSHIFT_WILDFLY10_MANAGEMENT_HTTPS_PORT} listening port"
+        if echo 2> /dev/null > "/dev/tcp/${OPENSHIFT_WILDFLY11_IP}/${OPENSHIFT_WILDFLY11_MANAGEMENT_HTTPS_PORT}"; then
+            echo "Found ${OPENSHIFT_WILDFLY11_IP}:${OPENSHIFT_WILDFLY11_MANAGEMENT_HTTPS_PORT} listening port"
             return 0
         fi
         let count=${count}+1
@@ -200,7 +200,7 @@ function ismgmtup() {
 
 function build() {
   return 0;
-  CONFIG_DIR="${OPENSHIFT_WILDFLY10_DIR}/standalone/configuration"
+  CONFIG_DIR="${OPENSHIFT_WILDFLY11_DIR}/standalone/configuration"
   OPENSHIFT_MAVEN_MIRROR="${CONFIG_DIR}/settings.base.xml"
   if [[ $OPENSHIFT_GEAR_DNS =~ .*\.rhcloud\.com$ ]]
   then
@@ -280,7 +280,7 @@ function deploy() {
   # and delete any files in $WILDFLY_DEPLOYMENTS_DIR that don't exist in
   # repo/deployments
   if [ "$(ls ${OPENSHIFT_REPO_DIR}/deployments)" ]; then
-    rsync -r --delete --exclude ".*" ${OPENSHIFT_REPO_DIR}/deployments/ $WILDFLY10_DEPLOYMENTS_DIR
+    rsync -r --delete --exclude ".*" ${OPENSHIFT_REPO_DIR}/deployments/ $WILDFLY11_DEPLOYMENTS_DIR
   fi
 }
 
@@ -295,9 +295,9 @@ function start() {
   if isrunning; then
       echo "Application is already running"
   else
-    ${WILDFLY10_BIN_DIR}/standalone.sh -b $OPENSHIFT_WILDFLY10_IP -bmanagement=$OPENSHIFT_WILDFLY10_IP > /opt/repo/logs/server.log 2>&1 &
+    ${WILDFLY11_BIN_DIR}/standalone.sh -b $OPENSHIFT_WILDFLY11_IP -bmanagement=$OPENSHIFT_WILDFLY11_IP > /opt/repo/logs/server.log 2>&1 &
     PROCESS_ID=$!
-    echo "$PROCESS_ID" > ${WILDFLY10_PID_FILE}
+    echo "$PROCESS_ID" > ${WILDFLY11_PID_FILE}
 
     rc=0
     ishttpup || rc=$?
@@ -316,11 +316,11 @@ function stop() {
   echo "Stopping $cartridge_type cart"
 
   if isrunning; then
-    if [ -f "$WILDFLY10_PID_FILE" ]; then
-      pid=$(cat $WILDFLY10_PID_FILE);
+    if [ -f "$WILDFLY11_PID_FILE" ]; then
+      pid=$(cat $WILDFLY11_PID_FILE);
       echo "Sending SIGTERM to wildfly:$pid ..." 1>&2
       killtree $pid
-      rm -f $WILDFLY10_PID_FILE;
+      rm -f $WILDFLY11_PID_FILE;
     else
       echo "Failed to locate WildFly PID File" 1>&2
     fi
@@ -353,9 +353,9 @@ function reload() {
 
 # Clean up any log files
 function tidy() {
-  client_message "Emptying log dir: $OPENSHIFT_WILDFLY10_LOG_DIR"
+  client_message "Emptying log dir: $OPENSHIFT_WILDFLY11_LOG_DIR"
   shopt -s dotglob
-  rm -rf $OPENSHIFT_WILDFLY10_LOG_DIR/*
+  rm -rf $OPENSHIFT_WILDFLY11_LOG_DIR/*
 }
 
 function threaddump() {
@@ -364,8 +364,8 @@ function threaddump() {
     if ! isrunning; then
         echo "Application is stopped"
         exit 1
-    elif [ -f "$WILDFLY10_PID_FILE" ]; then
-        pid=$(cat $WILDFLY10_PID_FILE);
+    elif [ -f "$WILDFLY11_PID_FILE" ]; then
+        pid=$(cat $WILDFLY11_PID_FILE);
         java_pid=$(ps h --ppid $pid -o '%p')
         kill -3 $java_pid
         client_result "Success"
